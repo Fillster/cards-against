@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import pb from "@/lib/pocketbase";
-// Initialize PocketBase
 
 // Define TypeScript interface for the data
 interface Player {
@@ -8,18 +7,31 @@ interface Player {
 }
 
 const CreatePlayer: React.FC = () => {
-  const [playerName, setPlayerName] = useState<string>("");
+  const [playerName, setPlayerName] = useState<string>(
+    localStorage.getItem('playerName') || ""
+  ); // Default to an empty string if localStorage is null
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   const createPlayer = async () => {
+    if (!playerName) {
+      setResponseMessage("Player name is required.");
+      return;
+    }
+
     const data: Player = {
-      name: playerName,
+      name: playerName, // Guaranteed to be a string
     };
 
     try {
       const record = await pb.collection("player").create(data);
+
+      // Set the player name in localStorage after successful creation
+      localStorage.setItem('playerName', playerName);
+      localStorage.setItem('playerId', record.id);
+      console.log(record.id);
+
       setResponseMessage(`Player created with ID: ${record.id}`);
-    } catch (error) {
+    } catch (error: any) {
       setResponseMessage(`Error creating player: ${error.message}`);
     }
   };
