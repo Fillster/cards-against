@@ -1,17 +1,21 @@
-import { useState, useEffect } from "react";
-import pb from "@/lib/pocketbase";
-import { Button } from "./ui/button";
-
+// components/LobbyList.tsx
+import { useState, useEffect } from 'react';
+import pb from '@/lib/pocketbase';
+import { Button } from './ui/button';
+import usePlayerLobbyStore from '@/store/playerLobbyStore';
+import PlayerLobbyCount from './playerLobbyCount';
 // Define the structure of a lobby record
 interface Lobby {
   id: string;
   name: string;
+  current_player: number;
   [key: string]: any; // Add this if there are additional dynamic fields
 }
 
 const LobbyList: React.FC = () => {
   const [lobbies, setLobbies] = useState<Lobby[]>([]); // State to hold the list of lobbies
-  const [playerId, setPlayerId] = useState<string | null>(null);
+  const { playerId, setPlayerLobbyId } = usePlayerLobbyStore(); // Access playerId and store update functions
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -24,7 +28,7 @@ const LobbyList: React.FC = () => {
 
         // Subscribe to changes in the 'lobbies' collection
         unsubscribe = await pb.collection('lobbies').subscribe('*', (e) => {
-          console.log(e.action);
+          console.log("this: ", e.action);
           console.log(e.record);
 
           setLobbies((prevLobbies) => {
@@ -57,40 +61,45 @@ const LobbyList: React.FC = () => {
     };
   }, []);
 
-   useEffect(() => {
-      // Retrieve the player name from localStorage when the component mounts
-      const storedPlayerId = localStorage.getItem("playerId");
-      setPlayerId(storedPlayerId);
-    }, []); // Empty dependency array ensures this runs only once
-
-  //when lobby click. take current username. get lobby id of clicked element.
   const handleLobbyJoin = async (lobbyId: string) => {
-    console.log("Joining lobby:", lobbyId);
-  
-    // Retrieve playerId from localStorage or another source
-    const playerId = localStorage.getItem("playerId"); // Assuming playerId is stored here
     if (!playerId) {
       console.error("No player ID found. Please log in or set a player name first.");
       return;
     }
-  
-    // Create the data object for the lobby_players collection
+
     const data = {
       lobby_id: lobbyId,
-      user_id: playerId,
+      player_id: playerId,
       is_ready: false,
     };
-  
+
     try {
-      // Create the record in the PocketBase 'lobby_players' collection
       const record = await pb.collection("lobby_players").create(data);
       console.log("Successfully joined lobby:", record);
+
+      // Update player lobby state in Zustand and localStorage
+      setPlayerLobbyId(lobbyId);
     } catch (error: any) {
       console.error("Error joining lobby:", error.message);
     }
   };
-  
 
+  const onCreateLobby = async () => {
+    if (!playerId) {
+      console.error("Player ID is required to create a lobby.");
+      return;
+    }
+
+    const data = {
+      max_players: 8,
+      name: "test",
+      is_active: true,
+      host_id: playerId,
+    };
+
+    const record = await pb.collection('lobbies').create(data);
+    console.log("Created new lobby:", record);
+  };
 
   return (
     <div className="flex flex-col">
@@ -100,14 +109,15 @@ const LobbyList: React.FC = () => {
       {lobbies.length > 0 ? (
         lobbies.map((lobby) => (
           <div key={lobby.id} className="p-2 border-b flex flex-row gap-2">
-            <p>{lobby.name || `Lobby ${lobby.id}`}</p> 
-            <p>Players: 0/{lobby.max_players}</p>
+            <p>{lobby.name || `Lobby ${lobby.id}`}</p>
+            <p>Players: <PlayerLobbyCount lobbyId={lobby.id} />/{lobby.max_players}</p>
             <Button onClick={() => handleLobbyJoin(lobby.id)}>Join</Button>
           </div>
         ))
       ) : (
         <div>No lobbies available</div>
       )}
+      <Button onClick={onCreateLobby}>Create Lobby</Button>
     </div>
   );
 };
