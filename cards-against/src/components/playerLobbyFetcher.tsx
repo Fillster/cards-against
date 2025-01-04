@@ -92,6 +92,69 @@ const PlayerLobbyFetcher: React.FC = () => {
     }
   };
 
+  const fetchLobbyPlayers = async (lobbyId: string): Promise<LobbyPlayer[]> => {
+    try {
+      const records = await pb
+        .collection("lobby_players")
+        .getFullList<LobbyPlayer>({
+          filter: `lobby_id="${lobbyId}"`,
+        });
+      console.log("Fetched lobby players:", records);
+      return records;
+    } catch (err: any) {
+      console.error("Failed to fetch lobby players:", err);
+      throw new Error(err.message || "Failed to fetch lobby players");
+    }
+  };
+
+  const createGame = async (lobbyId: string): Promise<string> => {
+    try {
+      const data = {
+        name: "test", // Example name, replace as needed
+        host_id: playerId, // Replace with actual host ID
+        status: "test", // Example status, replace as needed
+        lobby_id: lobbyId,
+      };
+      const record = await pb.collection("games").create(data);
+      console.log("Game created:", record);
+      return record.id; // Assuming the created record has an `id` field
+    } catch (err: any) {
+      console.error("Failed to create game:", err);
+      throw new Error(err.message || "Failed to create game");
+    }
+  };
+
+  const addPlayersToGame = async (gameId: string, playerIds: string[]) => {
+    for (const playerId of playerIds) {
+      const data = {
+        game_id: gameId,
+        score: 0, // Example score, replace with actual logic if needed
+        player_id: playerId,
+      };
+      try {
+        const record = await pb.collection("game_players").create(data);
+        console.log("Player added to game:", record);
+      } catch (err: any) {
+        console.error(`Failed to add player ${playerId} to game:`, err);
+      }
+    }
+  };
+
+  const StartGame = async () => {
+    try {
+      const lobbyPlayers = await fetchLobbyPlayers(playerLobbyId);
+      const playerIds = lobbyPlayers.map((player) => player.player_id);
+
+      const gameId = await createGame(playerLobbyId);
+      await addPlayersToGame(gameId, playerIds);
+
+      console.log("Game started successfully");
+    } catch (err: any) {
+      console.error("Failed to start game:", err);
+      setError(err.message || "Failed to start game");
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -117,6 +180,9 @@ const PlayerLobbyFetcher: React.FC = () => {
       ) : (
         <p>No players found for this lobby.</p>
       )}
+      <div className="">
+        <Button onClick={StartGame}>Start game</Button>
+      </div>
       <div className="self-end">
         <Button onClick={leaveLobby}>Leave Lobby</Button>
       </div>
