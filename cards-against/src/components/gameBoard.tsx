@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import PlayersInGame from "./playersInGame";
 import PlayerHand from "./playerHand";
 import pb from "@/lib/pocketbase";
+import { getCurrentRoundByGameId } from "@/api/api";
+import usePlayerLobbyStore from "@/store/playerLobbyStore";
 
 interface Card {
   id: string;
@@ -11,6 +13,27 @@ interface Card {
 
 const GameBoard = () => {
   const [cards, setCards] = useState<Card[]>([]);
+  const { playerGameId } = usePlayerLobbyStore();
+  //GET CURRENT ROUND. where playerGameId = game_ID. and Round= ACTIVE
+  //PASS WHO card zard is to tomethign.
+  //let other player select card. Then when they click done round IT get sent
+  //to submissions.
+  //WHEN ALL cards added to submissions reveal.
+  //Card tzar pick one card. Find playerID from that card then give them +1 score
+  //change roudn status to done. The give player new card and create new round.
+  useEffect(() => {
+    const fetchCurrentRound = async () => {
+      try {
+        const currentRound = await getCurrentRoundByGameId(playerGameId);
+        console.log("Current round: ", currentRound?.czar_id);
+        //set current tzar to zustand store. lobbylist can access this.
+      } catch (error) {
+        console.error("Error fetching current round: ", error);
+      }
+    };
+
+    fetchCurrentRound();
+  }, []);
 
   useEffect(() => {
     const fetchCards = async () => {

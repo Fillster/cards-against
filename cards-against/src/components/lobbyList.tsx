@@ -118,8 +118,6 @@ const LobbyList: React.FC = () => {
     console.log("Created new lobby:", record);
   };
 
-  
-
   return (
     <div className="flex flex-col bordergap-2">
       <div className="border border-slate-300 ">
