@@ -64,3 +64,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+body {
+  background-image: url("https://cdn.prod.website-files.com/6674f0cdb5b7b401612cf015/6674f0cdb5b7b401612cf065_noise-50.avif");
+  background-position: 0 0;
+  background-size: 200px 200px;
+
+}
