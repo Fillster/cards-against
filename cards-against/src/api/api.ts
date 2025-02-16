@@ -1,23 +1,5 @@
 import pb from "@/lib/pocketbase";
-import fs from "fs";
-
-interface Rounds {
-    id: string;
-    black_card_id: string;
-    status: string;
-    czar_id: string; // Add this if there are additional dynamic fields
-    expand?: {
-        black_card_id?: {
-          text: string;
-        }
-      }
-    }
-
-interface SubmissionData {
-    round_id: string;
-    card_id: string;
-    game_players_id: string;
-    }
+import { CreateGameData, JoinGameData, Rounds, SubmissionData } from "@/lib/interface";
 
 
 export async function getCurrentRoundByGameId(player_game_id: string | null) {
@@ -43,6 +25,7 @@ export async function getCurrentRoundByGameId(player_game_id: string | null) {
 
 export async function createSubmission(data: SubmissionData) {
     try {
+      console.log("DATA: ", data)
       const record = await pb.collection("submissions").create(data);
       return record; // Return the created submission record
     } catch (error) {
@@ -116,3 +99,104 @@ export async function drawUniqueCard(playerId: string, gameId: string) {
     return availableCards.items; // Return drawn cards
   }
   
+
+
+
+  export async function joinLobby(lobbyId: string, playerId: string) {
+    const data = {
+      lobby_id: lobbyId,
+      player_id: playerId,
+      is_ready: false,
+    };
+  
+    try {
+      const record = await pb.collection("lobby_players").create(data);
+      return record;
+    } catch (error: any) {
+      console.error("Error joining lobby:", error.message);
+      throw error;
+    }
+  }
+
+  export async function createLobby(hostLobbyName: string, playerId: string) {
+    const data = {
+      max_players: 8,
+      name: hostLobbyName,
+      is_active: true,
+      host_id: playerId,
+    };
+  
+    try {
+      const record = await pb.collection("lobbies").create(data);
+      return record; // Return the created lobby
+    } catch (error) {
+      console.error("Error creating lobby:", error);
+      throw error; // Allow caller to handle the error
+    }
+  }
+
+// Create a new game
+export const createGame = async ({
+  playerId,
+  name,
+  status,
+}: CreateGameData): Promise<string> => {
+  try {
+    const data = {
+      name, // Game name
+      host_id: playerId, // Host ID
+      status, // Game status
+    };
+
+    const record = await pb.collection("games").create(data);
+    console.log("Game created:", record);
+    return record.id; // Assuming the created record has an `id` field
+  } catch (err: any) {
+    console.error("Failed to create game:", err);
+    throw new Error(err.message || "Failed to create game");
+  }
+};
+
+// Join a game with the player's score and ID
+export const joinGame = async ({ gameId, playerId, score }: JoinGameData) => {
+  try {
+    const data = {
+      game_id: gameId,
+      score, // Score, which could be 0 or any other logic-based score
+      player_id: playerId,
+    };
+
+    const record = await pb.collection("game_players").create(data);
+    console.log("Player joined game:", record);
+    return record.id;
+  } catch (err: any) {
+    console.error(`Failed to add player ${playerId} to game ${gameId}:`, err);
+    throw new Error(err.message || `Failed to join game ${gameId}`);
+  }
+};
+
+
+export const leaveGame = async (playerId: string) => {
+  if (!playerId) throw new Error("Player ID is required to leave the game.");
+
+  try {
+    const playerRecord = await pb.collection("game_players").getFirstListItem(`player_id="${playerId}"`);
+    if (!playerRecord) throw new Error("Player is not in any game.");
+
+    await pb.collection("game_players").delete(playerRecord.id);
+    console.log("Player left the game:", playerRecord);
+  } catch (err: any) {
+    console.error("Failed to leave game:", err);
+    throw new Error(err.message || "Failed to leave game");
+  }
+};
+
+export const fetchGames = async () => {
+  try {
+    const games = await pb.collection("games").getFullList();
+    return games;
+  } catch (err: any) {
+    console.error("Failed to fetch games:", err);
+    throw new Error(err.message || "Failed to fetch games");
+  }
+};

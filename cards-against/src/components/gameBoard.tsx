@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import PlayersInGame from "./playersInGame";
 import PlayerHand from "./playerHand";
 import pb from "@/lib/pocketbase";
-import { getCurrentRoundByGameId } from "@/api/api";
+import { drawWhiteCards, getCurrentRoundByGameId } from "@/api/api";
 import usePlayerLobbyStore from "@/store/playerLobbyStore";
 import PlayerCard from "./playerCard";
 import { useGameStore } from "@/store/useGameStore";
 import PlayerSubmissions from "./playerSubmissions";
+import LeaveGameButton from "./LeaveGameButton";
 interface Card {
   id: string;
   text: string;
@@ -38,6 +39,24 @@ const GameBoard = () => {
   //WHEN ALL cards added to submissions reveal.
   //Card tzar pick one card. Find playerID from that card then give them +1 score
   //change roudn status to done. The give player new card and create new round.
+
+  useEffect(() => {
+    if (!playerGameId) {
+      console.error("Missing playerGameId");
+      return;
+    }
+    const fetchCardsForPlayer = async () => {
+      try {
+        const result = await drawWhiteCards(playerGameId, "612h9rzy28i7i90");
+        console.log("FETCH CARDS FOR PLAYERS: ", result);
+      } catch (error) {
+        console.log("ERROR fetch cards");
+      }
+    };
+
+    fetchCardsForPlayer();
+  }, []);
+
   useEffect(() => {
     const fetchCurrentRound = async () => {
       if (!playerGameId) return;
@@ -93,6 +112,7 @@ const GameBoard = () => {
       <div className="flex-[1] flex flex-row gap-4">
         <PlayersInGame />
         <PlayerHand />
+        <LeaveGameButton />
       </div>
     </div>
   );

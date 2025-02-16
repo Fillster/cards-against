@@ -15,8 +15,6 @@ interface Lobby {
 const LobbyList: React.FC = () => {
   const [lobbies, setLobbies] = useState<Lobby[]>([]); // State to hold the list of lobbies
   const { playerId, setPlayerLobbyId } = usePlayerLobbyStore(); // Access playerId and store update functions
-  const [loading, setLoading] = useState<boolean>(false);
-  const [hostLobbyName, setHostLobbyName] = useState<string>("");
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -96,31 +94,9 @@ const LobbyList: React.FC = () => {
     }
   };
 
-  const onCreateLobby = async () => {
-    if (!hostLobbyName) {
-      console.log("Need hostname");
-      return;
-    }
-
-    if (!playerId) {
-      console.error("Player ID is required to create a lobby.");
-      return;
-    }
-
-    const data = {
-      max_players: 8,
-      name: hostLobbyName,
-      is_active: true,
-      host_id: playerId,
-    };
-
-    const record = await pb.collection("lobbies").create(data);
-    console.log("Created new lobby:", record);
-  };
-
   return (
     <div className="flex flex-col bordergap-2">
-      <div className="border border-slate-300 ">
+      <div className="border border-slate-300 min-h-96 ">
         <div className="p-2">
           <h1 className="text-xl font-bold">Lobby List:</h1>
           <hr></hr>
@@ -138,15 +114,6 @@ const LobbyList: React.FC = () => {
         ) : (
           <div>No lobbies available</div>
         )}
-      </div>
-      <div className="flex flex-row gap-2 pt-2 justify-end">
-        <Input
-          type="text"
-          onChange={(e) => setHostLobbyName(e.target.value)}
-          placeholder="Lobby name"
-          className="w-34"
-        ></Input>
-        <Button onClick={onCreateLobby}>Create Lobby</Button>
       </div>
     </div>
   );
