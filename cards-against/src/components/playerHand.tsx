@@ -1,4 +1,5 @@
 import usePlayerLobbyStore from "@/store/playerLobbyStore";
+import { useGameStore } from "@/store/useGameStore";
 import { useEffect, useState } from "react";
 import pb from "@/lib/pocketbase";
 import { createSubmission } from "@/api/api";
@@ -25,12 +26,15 @@ const PlayerHand = () => {
   const { playerId } = usePlayerLobbyStore();
   const { playerGameId } = usePlayerLobbyStore();
   const [playerHand, setPlayerHand] = useState<PlayerHand[]>([]);
-
+  const { gamePlayerId } = useGameStore(); // ✅ Added setGamePlayerId
+  
   useEffect(() => {
     const fetchPlayerHandsCard = async () => {
       try {
+        console.log(gamePlayerId)
+        console.log("PLAYER HAND: ", "8694kmtc458075l")
         const resultList = await pb.collection("player_cards").getList(1, 50, {
-          filter: `player_id="${playerId}"`,
+          filter: `playerId="${gamePlayerId}"`,
           expand: "card_id", // Include related player data
         });
         console.log("player hand: ", resultList);

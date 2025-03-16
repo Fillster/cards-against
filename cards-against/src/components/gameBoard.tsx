@@ -40,7 +40,7 @@ const GameBoard = () => {
   //Card tzar pick one card. Find playerID from that card then give them +1 score
   //change roudn status to done. The give player new card and create new round.
 
-  useEffect(() => {
+ /* useEffect(() => {
     if (!playerGameId) {
       console.error("Missing playerGameId");
       return;
@@ -55,9 +55,9 @@ const GameBoard = () => {
     };
 
     fetchCardsForPlayer();
-  }, []);
+  }, []);*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchCurrentRound = async () => {
       if (!playerGameId) return;
       try {
@@ -74,9 +74,9 @@ const GameBoard = () => {
     };
 
     fetchCurrentRound();
-  }, [playerGameId]);
+  }, [playerGameId]);*/
 
-  useEffect(() => {
+ /* useEffect(() => {
     const fetchCards = async () => {
       try {
         // Fetch the paginated records
@@ -92,7 +92,7 @@ const GameBoard = () => {
     };
 
     fetchCards();
-  }, []);
+  }, []);*/
 
   return (
     <div className="h-screen flex flex-col">

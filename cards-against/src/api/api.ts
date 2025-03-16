@@ -50,20 +50,32 @@ export async function createSubmission(data: SubmissionData) {
 
 export async function drawUniqueCard(playerId: string, gameId: string) {
     // Fetch one card that is NOT already in player_cards for this game
-    const availableCards = await pb.collection('cards').getList(1, 1, {
-      filter: `id NOT IN (SELECT card_id FROM player_cards WHERE game_id = "${gameId}")`,
-      sort: '@random' // Get a random card
+    console.log("Draw card...")
+    console.log("PlayerID: ", playerId)
+    console.log("GameID: ", gameId)
+   /* const playerCards = await pb.collection("player_cards").getFullList({
+      filter: `game_id = "${gameId}"`,
     });
-  
-    if (availableCards.items.length === 0) {
-      throw new Error("No more unique cards available.");
-    }
-  
+    
+    // Extract already used card IDs
+    const usedCardIds = playerCards.map((card) => `"${card.card_id}"`).join(",");
+    
+    // Fetch a random available card that is NOT in usedCardIds
+    const filterQuery = usedCardIds.length
+      ? `id NOT IN (${usedCardIds})`
+      : ""; // If no used cards, fetch any card
+    */
+    const availableCards = await pb.collection("cards").getList(1,1, {
+      //filter: filterQuery,
+      sort: "@random",
+    });
+    console.log(availableCards)
     const drawnCard = availableCards.items[0];
-  
+    console.log("DRAWNCARD : ", drawnCard.id)
     // Assign the card to the player
+    //ADD HERE TO ADD MULTIPLE CARDS
     await pb.collection('player_cards').create({
-      player_id: playerId,
+      playerId: playerId,
       game_id: gameId,
       card_id: drawnCard.id,
       used: false
@@ -200,3 +212,27 @@ export const fetchGames = async () => {
     throw new Error(err.message || "Failed to fetch games");
   }
 };
+
+export async function deletePlayerCards(gamePlayerId: string) {
+  try {
+    if (!gamePlayerId) {
+      throw new Error("No gamePlayerId found. Cannot remove cards.");
+    }
+
+    // Fetch all player_cards assigned to this gamePlayerId
+    const playerCards = await pb.collection("player_cards").getFullList({
+      filter: `playerId = "${gamePlayerId}"`,
+    });
+
+    // Delete each card assigned to the player
+    const deletePromises = playerCards.map((card) =>
+      pb.collection("player_cards").delete(card.id)
+    );
+    await Promise.all(deletePromises);
+
+    console.log(`Removed ${playerCards.length} cards assigned to the player.`);
+  } catch (error) {
+    console.error("Error removing player cards:", error);
+    throw error;
+  }
+}

@@ -1,9 +1,10 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-type PlayerState = 'idle' | 'choosing_card' | 'waiting' | 'card_czar' | 'viewing_results' | 'game_over';
+type PlayerState = "idle" | "choosing_card" | "waiting" | "card_czar" | "viewing_results" | "game_over";
 
 interface GameState {
-  playerId: string | null; // ✅ Now stores game_players ID, not just playerId
+  playerId: string | null; // ✅ Now stores player ID
+  gamePlayerId: string | null; // ✅ Stores game_players ID
   playerState: PlayerState;
   isCardCzar: boolean;
   currentRound: number;
@@ -11,7 +12,8 @@ interface GameState {
   czarSelection: string | null;
   gameStarted: boolean;
 
-  setPlayerId: (id: string) => void; // ✅ Store game_players ID
+  setPlayerId: (id: string) => void;
+  setGamePlayerId: (id: string) => void; // ✅ Setter for gamePlayerId
   setPlayerState: (state: PlayerState) => void;
   setIsCardCzar: (isCzar: boolean) => void;
   startGame: () => void;
@@ -21,7 +23,8 @@ interface GameState {
 }
 
 export const useGameStore = create<GameState>((set) => ({
-  playerId: null, // ✅ Stores game_players ID
+  playerId: null, // ✅ Stores player ID
+  gamePlayerId: null, // ✅ Stores game_players ID
   playerState: "idle",
   isCardCzar: false,
   currentRound: 1,
@@ -29,7 +32,8 @@ export const useGameStore = create<GameState>((set) => ({
   czarSelection: null,
   gameStarted: false,
 
-  setPlayerId: (id) => set({ playerId: id }), // ✅ Now stores game_players ID
+  setPlayerId: (id) => set({ playerId: id }), // ✅ Setter for playerId
+  setGamePlayerId: (id) => set({ gamePlayerId: id }), // ✅ Setter for gamePlayerId
   setPlayerState: (state) => set({ playerState: state }),
   setIsCardCzar: (isCzar) => set({ isCardCzar: isCzar, playerState: isCzar ? "card_czar" : "choosing_card" }),
 
