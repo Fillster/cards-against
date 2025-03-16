@@ -4,13 +4,11 @@ import { CreateGameData } from "@/types"; // Ensure this type is correctly defin
 
 export function useCreateGame() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (gameData: CreateGameData) => createGame(gameData),
 
     onSuccess: (gameId) => {
       console.log("Game created successfully with ID:", gameId);
-
       // Optionally invalidate or refetch related queries
       queryClient.invalidateQueries({ queryKey: ["games"] });
     },

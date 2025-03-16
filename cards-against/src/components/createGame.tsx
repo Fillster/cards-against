@@ -2,42 +2,19 @@ import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import usePlayerLobbyStore from "@/store/playerLobbyStore";
-import { useCreateGame } from "@/hooks/useCreateGame";
-import { useJoinGame } from "@/hooks/useJoinGame";
+import { useCreateAndStartGame } from "@/hooks/useCreateAndStartGame";
 
 const CreateGame = () => {
   const { playerId } = usePlayerLobbyStore();
   const [gameName, setGameName] = useState("");
+  const { mutate: startGame, isPending, error } = useCreateAndStartGame();
 
-  const {
-    mutate: createGame,
-    status: createStatus,
-    error: createError,
-  } = useCreateGame();
-  const {
-    mutate: joinGame,
-    status: joinStatus,
-    error: joinError,
-  } = useJoinGame();
-
-  const isCreating = createStatus === "pending";
-  const isJoining = joinStatus === "pending";
-
-  const handleCreateGame = async () => {
+  const handleCreateGame = () => {
     if (!playerId) {
-      console.error("Player ID is required to create a game.");
+      console.error("❌ Player ID is required.");
       return;
     }
-
-    createGame(
-      { playerId, name: gameName, status: "active" },
-      {
-        onSuccess: (gameId) => {
-          // Once the game is created successfully, join it
-          joinGame({ gameId, playerId, score: 0 });
-        },
-      }
-    );
+    startGame({ playerId, gameName });
   };
 
   return (
@@ -49,11 +26,10 @@ const CreateGame = () => {
         placeholder="Game name"
         className="w-34"
       />
-      <Button onClick={handleCreateGame} disabled={isCreating || isJoining}>
-        {isCreating ? "Creating..." : isJoining ? "Joining..." : "Create Game"}
+      <Button onClick={handleCreateGame} disabled={isPending}>
+        {isPending ? "Creating..." : "Create Game"}
       </Button>
-      {createError && <p>Error creating game: {createError.message}</p>}
-      {joinError && <p>Error joining game: {joinError.message}</p>}
+      {error && <p className="text-red-500">Error: {error.message}</p>}
     </div>
   );
 };

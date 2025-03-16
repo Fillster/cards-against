@@ -12,6 +12,7 @@ export interface JoinGameData {
 
  export interface Rounds {
 id: string;
+game_id: string;
 black_card_id: string;
 status: string;
 czar_id: string; // Add this if there are additional dynamic fields
@@ -27,3 +28,4 @@ round_id: string;
 card_id: string;
 game_players_id: string;
 }
+
