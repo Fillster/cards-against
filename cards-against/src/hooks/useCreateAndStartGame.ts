@@ -39,6 +39,7 @@ export function useCreateAndStartGame() {
         });
   
         // Optional: Invalidate Queries to Refetch Updated Data
+        queryClient.invalidateQueries({queryKey: ["playerHand"]});
         queryClient.invalidateQueries({ queryKey: ["game", gameId] });
       },
       onError: (error) => console.error("❌ Error starting game:", error),
