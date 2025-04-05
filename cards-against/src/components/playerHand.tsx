@@ -11,27 +11,37 @@ interface SubmissionData {
 
 const PlayerHand = () => {
   const { playerGameId } = usePlayerLobbyStore();
-  const { gamePlayerId } = useGameStore();
+
+  const gamePlayerId = useGameStore((state) => state.gamePlayerId);
+  const currentRound = useGameStore((state) => state.currentRound);
+  const playerState = useGameStore((state) => state.playerState);
+  const setPlayerState = useGameStore((state) => state.setPlayerState);
 
   const { data: playerHand = [], isLoading, error } = usePlayerHand(gamePlayerId ?? undefined);
 
-  const handleOnCardClick = async (cardId: string | undefined) => {
-    if (!cardId || !playerGameId) {
-      console.error("Missing cardId or playerId");
+  const handleCardSubmission = async (cardId: string | undefined) => {
+    if (!cardId || !playerGameId || !currentRound) {
+      console.error("Missing required submission info");
+      return;
+    }
+
+    if (playerState !== "choosing_card") {
+      console.warn("You cannot submit a card right now.");
       return;
     }
 
     const input: SubmissionData = {
-      round_id: "999ufr59e9v00rg",
+      round_id: currentRound,
       card_id: cardId,
       game_players_id: playerGameId,
     };
 
     try {
       const result = await createSubmission(input);
-      console.log(result);
+      console.log("Card submitted:", result);
+      setPlayerState("waiting"); // ✅ Set player to waiting
     } catch (e) {
-      console.log(e);
+      console.error("Submission failed:", e);
     }
   };
 
@@ -41,13 +51,19 @@ const PlayerHand = () => {
   return (
     <div className="flex flex-row gap-2">
       {playerHand.length === 0 && <p>No cards in hand</p>}
-      {playerHand.map((cards) => (
+      {playerHand.map((card) => (
         <div
-          key={cards.id} // ✅ Added key for better rendering
-          className="w-[200px] p-4 h-[240px] border-2 border-slate-900 rounded hover:scale-110"
-          onClick={() => handleOnCardClick(cards.expand?.card_id?.id)}
+          key={card.id}
+          className={`w-[200px] p-4 h-[240px] border-2 border-slate-900 rounded ${
+            playerState === "choosing_card" ? "hover:scale-110 cursor-pointer" : "opacity-50 cursor-not-allowed"
+          }`}
+          onClick={() => {
+            if (playerState === "choosing_card") {
+              handleCardSubmission(card.expand?.card_id?.id);
+            }
+          }}
         >
-          {cards.expand?.card_id?.text}
+          {card.expand?.card_id?.text}
         </div>
       ))}
     </div>

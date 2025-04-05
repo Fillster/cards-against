@@ -7,7 +7,7 @@ interface GameState {
   gamePlayerId: string | null; // ✅ Stores game_players ID
   playerState: PlayerState;
   isCardCzar: boolean;
-  currentRound: number;
+  currentRound: string | null;
   submittedCards: string[];
   czarSelection: string | null;
   gameStarted: boolean;
@@ -16,6 +16,7 @@ interface GameState {
   setGamePlayerId: (id: string) => void; // ✅ Setter for gamePlayerId
   setPlayerState: (state: PlayerState) => void;
   setIsCardCzar: (isCzar: boolean) => void;
+  setCurrentRound: (id: string) => void;
   startGame: () => void;
   submitCard: (cardId: string) => void;
   selectWinner: (cardId: string) => void;
@@ -27,7 +28,7 @@ export const useGameStore = create<GameState>((set) => ({
   gamePlayerId: null, // ✅ Stores game_players ID
   playerState: "idle",
   isCardCzar: false,
-  currentRound: 1,
+  currentRound: null,
   submittedCards: [],
   czarSelection: null,
   gameStarted: false,
@@ -36,7 +37,7 @@ export const useGameStore = create<GameState>((set) => ({
   setGamePlayerId: (id) => set({ gamePlayerId: id }), // ✅ Setter for gamePlayerId
   setPlayerState: (state) => set({ playerState: state }),
   setIsCardCzar: (isCzar) => set({ isCardCzar: isCzar, playerState: isCzar ? "card_czar" : "choosing_card" }),
-
+  setCurrentRound: (id) => set({ currentRound: id }), // ✅ new setter
   startGame: () => set({ gameStarted: true, playerState: "choosing_card" }),
 
   submitCard: (cardId) => set((state) => ({
@@ -47,7 +48,7 @@ export const useGameStore = create<GameState>((set) => ({
   selectWinner: (cardId) => set({ czarSelection: cardId, playerState: "viewing_results" }),
 
   nextRound: () => set((state) => ({
-    currentRound: state.currentRound + 1,
+    currentRound: null,
     submittedCards: [],
     czarSelection: null,
     playerState: "choosing_card",

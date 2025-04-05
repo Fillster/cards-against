@@ -20,8 +20,8 @@ const drawBlackCard = async (): Promise<BlackCard> => {
             throw new Error("No black cards available");
         }
 
-       // return records[Math.floor(Math.random() * records.length)];
-       return records[0]
+         return records[Math.floor(Math.random() * records.length)];
+       
     } catch (error) {
         console.error("PocketBase Fetch Error:", error);
         throw error;

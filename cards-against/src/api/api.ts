@@ -2,26 +2,9 @@ import pb from "@/lib/pocketbase";
 import { CreateGameData, JoinGameData, Rounds, SubmissionData } from "@/lib/interface";
 
 
-export async function createNewRound(gameId: string, blackCardId: string, status: string, czarId: string) {
-  if(!gameId && !czarId) {
-    console.warn('game id is null or undefined. exiting function')
-    return null;
-  }
-  try {
-    const data = {
-      "game_id": gameId,
-      "black_card_id": blackCardId,
-      "status": status,
-      "czar_id": czarId,
-  };
-  
-  const record = await pb.collection('rounds').create(data);
-  return record
-  } catch (error) {
-    console.error("Error creating new round:, ", error);
-    throw error;
-  }
-}
+export const createRound = async (data) => {
+  return await pb.collection('rounds').create(data);
+};
 
 
 export async function getCurrentRoundByGameId(player_game_id: string | null) {

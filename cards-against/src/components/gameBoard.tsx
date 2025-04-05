@@ -29,9 +29,11 @@ interface Rounds {
 const GameBoard = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [blackCard, setBlackCard] = useState<String>("");
-  const [currentRound, setCurrentRound] = useState<Rounds | null>(null);
+
   const { playerGameId } = usePlayerLobbyStore();
   const { playerState } = useGameStore();
+  const setCurrentRound = useGameStore((state) => state.setCurrentRound);
+
   //GET CURRENT ROUND. where playerGameId = game_ID. and Round= ACTIVE
   //PASS WHO card zard is to tomethign.
   //let other player select card. Then when they click done round IT get sent
@@ -40,30 +42,15 @@ const GameBoard = () => {
   //Card tzar pick one card. Find playerID from that card then give them +1 score
   //change roudn status to done. The give player new card and create new round.
 
- /* useEffect(() => {
-    if (!playerGameId) {
-      console.error("Missing playerGameId");
-      return;
-    }
-    const fetchCardsForPlayer = async () => {
-      try {
-        const result = await drawWhiteCards(playerGameId, "612h9rzy28i7i90");
-        console.log("FETCH CARDS FOR PLAYERS: ", result);
-      } catch (error) {
-        console.log("ERROR fetch cards");
-      }
-    };
-
-    fetchCardsForPlayer();
-  }, []);*/
-
-  /*useEffect(() => {
+ 
+  useEffect(() => {
     const fetchCurrentRound = async () => {
       if (!playerGameId) return;
       try {
         const roundData = await getCurrentRoundByGameId(playerGameId);
         if (roundData) {
-          setCurrentRound(roundData);
+          setCurrentRound(roundData.id);
+        
           setBlackCard(roundData.expand.black_card_id.text);
           //setCzarId(roundData.czar_id); // Store czar ID in Zustand
           console.log(roundData);
@@ -74,25 +61,8 @@ const GameBoard = () => {
     };
 
     fetchCurrentRound();
-  }, [playerGameId]);*/
+  }, [playerGameId]);
 
- /* useEffect(() => {
-    const fetchCards = async () => {
-      try {
-        // Fetch the paginated records
-        const resultList = await pb.collection("cards").getList(1, 4, {
-          filter: 'type != "black"', // Adjust filter syntax for correct query
-        });
-        console.log(resultList.items);
-        // Update state with the fetched records
-        setCards(resultList.items); // Use `.items` from the result
-      } catch (error) {
-        console.error("Failed to fetch cards:", error); // Improved error logging
-      }
-    };
-
-    fetchCards();
-  }, []);*/
 
   return (
     <div className="h-screen flex flex-col">
