@@ -30,8 +30,8 @@ const GameBoard = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [blackCard, setBlackCard] = useState<String>("");
 
-  const { playerGameId } = usePlayerLobbyStore();
-  const { playerState } = useGameStore();
+  const { playerGameId, playerId } = usePlayerLobbyStore();
+  const setIsCardCzar = useGameStore((state) => state.setIsCardCzar);
   const setCurrentRound = useGameStore((state) => state.setCurrentRound);
 
   //GET CURRENT ROUND. where playerGameId = game_ID. and Round= ACTIVE
@@ -52,6 +52,10 @@ const GameBoard = () => {
           setCurrentRound(roundData.id);
         
           setBlackCard(roundData.expand.black_card_id.text);
+          if (roundData.czar_id == playerId) {
+            console.log("is card tzar")
+            setIsCardCzar(true)
+          }
           //setCzarId(roundData.czar_id); // Store czar ID in Zustand
           console.log(roundData);
         }

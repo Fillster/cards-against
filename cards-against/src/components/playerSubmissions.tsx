@@ -1,17 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import pb from "@/lib/pocketbase";
 import { getSubmissions } from "@/api/api";
 import { useGameStore } from "@/store/useGameStore";
 import PlayerCard from "./playerCard";
-//Subscribe to change in submissions.
-//view submissions where round_id === currentround.
-//being able to toggle visibility of cards
-//when playface only show cardw where playerid == submissionid
-// vote face. Reveal all.
-
-// player state. selectCardState, waitState, juryWaitState, jurySelectCardState
-//this can be handle on client.
-
+import { useRealtimeSubmissions } from "@/hooks/useRealtimeSubmissions";
+import { useNextRound } from "@/hooks/useNextRound";
 interface Submission {
   id: string;
   round_id: string;
@@ -23,88 +16,115 @@ interface Submission {
     };
   };
 }
+
 const PlayerSubmissions: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [currentSubmission, setCurrentSubmission] = useState<Submission | null>(
-    null
-  );
-  const { playerState } = useGameStore();
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [currentSubmission, setCurrentSubmission] = useState<Submission | null>(null);
+  const { nextRound } = useNextRound();
+  const { playerState, currentRound, isCardCzar } = useGameStore();
+  const currentPlayerId = pb.authStore.model?.id;
 
   useEffect(() => {
-    // Fetch current submissions
     const fetchCurrentSubmissions = async () => {
       try {
-        const submissionResult = await getSubmissions("999ufr59e9v00rg");
-        if (submissionResult?.items) {
-          console.log(submissionResult);
-          const formattedSubmissions: Submission[] = submissionResult.items.map(
-            (item) => ({
-              id: item.id,
-              round_id: item.round_id, // Ensure this field exists in `item`
-              card_id: item.card_id, // Ensure this field exists in `item`
-              game_players_id: item.game_players_id, // Ensure this field exists in `item`
-              expand: item.expand || {}, // Ensure expand is preserved
-            })
-          );
-
-          setSubmissions(formattedSubmissions);
+        const result = await getSubmissions(currentRound);
+        if (result?.items) {
+          const formatted = result.items.map((item: any) => ({
+            id: item.id,
+            round_id: item.round_id,
+            card_id: item.card_id,
+            game_players_id: item.game_players_id,
+            expand: item.expand || {},
+          }));
+          setSubmissions(formatted);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Failed to fetch submissions:", error);
       }
     };
-    //setSubmissions(submissionResult);
+
     fetchCurrentSubmissions();
+  }, [currentRound]);
 
-    // Function to handle real-time updates
-    const handleRealtimeUpdate = (e: {
-      action: string;
-      record: Submission;
-    }) => {
-      console.log(e.action, e.record);
-      setSubmissions((prev) => {
-        if (e.action === "create") {
-          return [...prev, e.record];
-        } else if (e.action === "update") {
-          return prev.map((sub) => (sub.id === e.record.id ? e.record : sub));
-        } else if (e.action === "delete") {
-          return prev.filter((sub) => sub.id !== e.record.id);
-        }
-        return prev;
-      });
-      setCurrentSubmission(e.record); // Update current submission
-    };
-
-    // Subscribe to PocketBase real-time updates
-    pb.collection("submissions").subscribe("*", handleRealtimeUpdate);
-
-    // Cleanup function
-    return () => {
-      pb.collection("submissions").unsubscribe("*");
-    };
+  const handleRealtimeUpdate = useCallback(async (e: { action: string; record: Submission }) => {
+    if (e.action === "create") {
+      try {
+        const fullSubmission = await pb.collection("submissions").getOne(e.record.id, {
+          expand: "card_id",
+        });
+  
+        setSubmissions((prev) => [...prev, fullSubmission]);
+      } catch (err) {
+        console.error("Error fetching expanded submission:", err);
+      }
+    } else if (e.action === "update") {
+      setSubmissions((prev) =>
+        prev.map((sub) => (sub.id === e.record.id ? e.record : sub))
+      );
+    } else if (e.action === "delete") {
+      setSubmissions((prev) => prev.filter((sub) => sub.id !== e.record.id));
+    }
+  
+    setCurrentSubmission(e.record);
   }, []);
+  
 
-  if (playerState == "viewing_results") {
-    return (
-      <div className="flex flex-row gap-2 ">
-        {submissions.map((submission) => (
+  useRealtimeSubmissions<Submission>(handleRealtimeUpdate);
+
+  const getCardText = (submission: Submission) => {
+    const isVisibleToPlayer =
+      playerState === "viewing_results" ||
+      isCardCzar ||
+      submission.game_players_id === currentPlayerId;
+
+    return isVisibleToPlayer ? submission.expand?.card_id?.text || "" : "";
+  };
+
+ 
+const handleCardClick = async (submission: Submission) => {
+  if (!isCardCzar) return;
+
+  setSelectedSubmissionId(submission.id);
+  console.log("Card Czar selected submission:", submission);
+
+  const playerId = submission.game_players_id;
+
+  try {
+    const player = await pb.collection("game_players").getOne(playerId);
+    await pb.collection("game_players").update(playerId, {
+      points: (player.points || 0) + 100,
+    });
+
+    console.log(`Awarded 100 points to player ${playerId}`);
+
+    // 🔥 Start next round after scoring
+    await nextRound(currentRound.game_id, currentRound.czar_id);
+  } catch (err) {
+    console.error("Error handling card click:", err);
+  }
+};
+  
+
+  if (!submissions.length && playerState !== "waiting") {
+    return <div>Loading submissions...</div>;
+  }
+
+  return (
+    <div className="flex flex-row gap-2">
+      {submissions.map((submission) => (
+        <div
+          key={submission.id}
+          onClick={() => handleCardClick(submission)}
+          className={`cursor-pointer ${
+            isCardCzar ? "hover:scale-105 transition-transform" : ""
+          } ${selectedSubmissionId === submission.id ? "ring-2 ring-blue-500" : ""}`}
+        >
           <PlayerCard
-            key={submission.id}
-            text={submission.expand?.card_id?.text || ""}
+            text={getCardText(submission)}
             type="white"
           />
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-row gap-2 ">
-      {submissions.map((submission) => (
-        <PlayerCard
-          key={submission.id}
-          text={submission.expand?.card_id?.text || ""}
-          type="white"
-        />
+        </div>
       ))}
     </div>
   );

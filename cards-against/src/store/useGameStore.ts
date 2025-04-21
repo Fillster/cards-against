@@ -26,7 +26,7 @@ interface GameState {
 export const useGameStore = create<GameState>((set) => ({
   playerId: null, // ✅ Stores player ID
   gamePlayerId: null, // ✅ Stores game_players ID
-  playerState: "idle",
+  playerState: "choosing_card",
   isCardCzar: false,
   currentRound: null,
   submittedCards: [],

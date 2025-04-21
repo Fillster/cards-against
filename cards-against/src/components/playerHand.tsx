@@ -29,13 +29,13 @@ const PlayerHand = () => {
       console.warn("You cannot submit a card right now.");
       return;
     }
-
+   
     const input: SubmissionData = {
       round_id: currentRound,
       card_id: cardId,
-      game_players_id: playerGameId,
+      game_players_id: gamePlayerId,
     };
-
+    console.log(input)
     try {
       const result = await createSubmission(input);
       console.log("Card submitted:", result);
