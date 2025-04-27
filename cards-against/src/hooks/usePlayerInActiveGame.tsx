@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import pb from "../lib/pocketbase";
-import usePlayerLobbyStore from "../store/playerLobbyStore";
+
 import { useGameStore } from "@/store/useGameStore";
 
 export function usePlayerInActiveGame() {
-  const { playerId, setPlayerGameId } = usePlayerLobbyStore();
-  const { setGamePlayerId } = useGameStore();
+ // const { playerId, setPlayerGameId } = usePlayerLobbyStore();
+  const { setGamePlayerId, setGameId, playerId } = useGameStore();
   const [playerInActiveGame, setPlayerInActiveGame] = useState<boolean>(false);
 
   useEffect(() => {
@@ -19,12 +19,12 @@ export function usePlayerInActiveGame() {
 
         if (records.length > 0) {
           setPlayerInActiveGame(true);
-          setPlayerGameId(records[0].game_id);
+          setGameId(records[0].game_id);
           setGamePlayerId(records[0].id); // Set the game_players row ID
           console.log("added gameID:", records[0].game_id, "gamePlayerId:", records[0].id);
         } else {
           setPlayerInActiveGame(false);
-          setPlayerGameId("");
+          setGameId("");
           setGamePlayerId("");
         }
       } catch (error) {
@@ -38,12 +38,12 @@ export function usePlayerInActiveGame() {
           if (e.record.player_id === playerId) {
             if (e.action === "create" || e.action === "update") {
               setPlayerInActiveGame(true);
-              setPlayerGameId(e.record.game_id);
+              setGameId(e.record.game_id);
               setGamePlayerId(e.record.id); // Set the game_players row ID
               console.log("added gameID:", e.record.game_id, "gamePlayerId:", e.record.id);
             } else if (e.action === "delete") {
               setPlayerInActiveGame(false);
-              setPlayerGameId("");
+              setGameId("");
               setGamePlayerId("");
             }
           }

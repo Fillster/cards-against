@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import usePlayerLobbyStore from "@/store/playerLobbyStore";
+import { useGameStore } from "@/store/useGameStore";
 import { useCreateAndStartGame } from "@/hooks/useCreateAndStartGame";
 
 const CreateGame = () => {
-  const { playerId } = usePlayerLobbyStore();
+  const playerId = useGameStore((state) => state.playerId); 
   const [gameName, setGameName] = useState("");
   const { mutate: startGame, isPending, error } = useCreateAndStartGame();
 

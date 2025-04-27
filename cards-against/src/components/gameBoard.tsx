@@ -8,6 +8,7 @@ import PlayerCard from "./playerCard";
 import { useGameStore } from "@/store/useGameStore";
 import PlayerSubmissions from "./playerSubmissions";
 import LeaveGameButton from "./LeaveGameButton";
+import { useActiveRound } from "@/hooks/useActiveRound";
 interface Card {
   id: string;
   text: string;
@@ -27,10 +28,12 @@ interface Rounds {
 }
 
 const GameBoard = () => {
-  const [cards, setCards] = useState<Card[]>([]);
+ 
   const [blackCard, setBlackCard] = useState<String>("");
 
-  const { playerGameId, playerId } = usePlayerLobbyStore();
+ // const { playerGameId, playerId } = usePlayerLobbyStore();
+  const gameId = useGameStore((state) => state.gameId)
+  const playerId = useGameStore((state) => state.playerId)
   const setIsCardCzar = useGameStore((state) => state.setIsCardCzar);
   const setCurrentRound = useGameStore((state) => state.setCurrentRound);
 
@@ -43,39 +46,24 @@ const GameBoard = () => {
   //change roudn status to done. The give player new card and create new round.
 
  
+  const { blackCardText, roundId, isCardCzar, loading } = useActiveRound(gameId, playerId);
+
+  // Optional: Update Zustand store if needed
   useEffect(() => {
-    const fetchCurrentRound = async () => {
-      if (!playerGameId) return;
-      try {
-        const roundData = await getCurrentRoundByGameId(playerGameId);
-        if (roundData) {
-          setCurrentRound(roundData.id);
-        
-          setBlackCard(roundData.expand.black_card_id.text);
-          if (roundData.czar_id == playerId) {
-            console.log("is card tzar")
-            setIsCardCzar(true)
-          }
-          //setCzarId(roundData.czar_id); // Store czar ID in Zustand
-          console.log(roundData);
-        }
-      } catch (error) {
-        console.error("Error fetching current round:", error);
-      }
-    };
-
-    fetchCurrentRound();
-  }, [playerGameId]);
-
+    if (roundId) {
+      setCurrentRound(roundId);
+    }
+    setIsCardCzar(isCardCzar);
+  }, [roundId, isCardCzar]);
 
   return (
     <div className="h-screen flex flex-col">
-      <h1>{playerGameId}</h1>
+      <h1>{gameId}</h1>
       <div className="flex-[3] flex justify-center">
         <div className="container flex items-center border align-center">
           <div className="flex flex-col gap-2">
             <div className="">
-              <PlayerCard text={blackCard} type={"black"} />
+            <PlayerCard text={blackCardText || ""} type={"black"} />
             </div>
             <div className="flex flex-row gap-2 ">
               <PlayerSubmissions />

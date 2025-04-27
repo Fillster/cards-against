@@ -1,7 +1,7 @@
-import usePlayerLobbyStore from "@/store/playerLobbyStore";
 import { useGameStore } from "@/store/useGameStore";
 import { usePlayerHand } from "@/hooks/usePlayerHand"; 
 import { createSubmission } from "@/api/api";
+import { useEffect } from "react";
 
 interface SubmissionData {
   round_id: string;
@@ -10,21 +10,36 @@ interface SubmissionData {
 }
 
 const PlayerHand = () => {
-  const { playerGameId } = usePlayerLobbyStore();
-
+  //const { playerGameId } = usePlayerLobbyStore();
+  const gameId = useGameStore((state) => state.gameId)
   const gamePlayerId = useGameStore((state) => state.gamePlayerId);
   const currentRound = useGameStore((state) => state.currentRound);
   const playerState = useGameStore((state) => state.playerState);
   const setPlayerState = useGameStore((state) => state.setPlayerState);
+  console.log("YOU PLAYERSTAE IS : ", playerState)
+  const { data: playerHand = [], isLoading, error, refetch  } = usePlayerHand(gamePlayerId ?? undefined);
+ 
+  useEffect(() => {
+    if (playerHand.length === 0 && !isLoading && !error) {
+      const timer = setTimeout(() => {
+        console.log("Hand is empty, retrying fetch...");
+        refetch();
+      }, 1000); // wait 2 seconds before trying again
+  
+      return () => clearTimeout(timer);
+    }
+  }, [playerHand, isLoading, error, refetch]);
 
-  const { data: playerHand = [], isLoading, error } = usePlayerHand(gamePlayerId ?? undefined);
+  if (!gamePlayerId) {
+      return <p>Joining game... waiting for hand...</p>;
+    }
 
   const handleCardSubmission = async (cardId: string | undefined) => {
-    if (!cardId || !playerGameId || !currentRound) {
+    if (!cardId || !gameId || !currentRound) {
       console.error("Missing required submission info");
       return;
     }
-
+   
     if (playerState !== "choosing_card") {
       console.warn("You cannot submit a card right now.");
       return;

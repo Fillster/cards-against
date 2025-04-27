@@ -20,7 +20,6 @@ const fetchPlayerHand = async (gamePlayerId: string | undefined) => {
     filter: `playerId="${gamePlayerId}"`,
     expand: "card_id",
   });
-
   return resultList.items;
 };
 
@@ -30,5 +29,6 @@ export const usePlayerHand = (gamePlayerId: string | undefined) => {
     queryFn: () => fetchPlayerHand(gamePlayerId),
     enabled: !!gamePlayerId, // Only fetch when gamePlayerId is available
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    
   });
 };

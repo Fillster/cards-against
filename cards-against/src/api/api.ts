@@ -30,7 +30,6 @@ export async function getCurrentRoundByGameId(player_game_id: string | null) {
 
 export async function createSubmission(data: SubmissionData) {
     try {
-      console.log("DATA: ", data)
       const record = await pb.collection("submissions").create(data);
       return record; // Return the created submission record
     } catch (error) {
@@ -55,9 +54,7 @@ export async function createSubmission(data: SubmissionData) {
 
 export async function drawUniqueCard(playerId: string, gameId: string) {
     // Fetch one card that is NOT already in player_cards for this game
-    console.log("Draw card...")
-    console.log("PlayerID: ", playerId)
-    console.log("GameID: ", gameId)
+ 
    /* const playerCards = await pb.collection("player_cards").getFullList({
       filter: `game_id = "${gameId}"`,
     });
@@ -74,9 +71,9 @@ export async function drawUniqueCard(playerId: string, gameId: string) {
       //filter: filterQuery,
       sort: "@random",
     });
-    console.log(availableCards)
+
     const drawnCard = availableCards.items[0];
-    console.log("DRAWNCARD : ", drawnCard.id)
+   
     // Assign the card to the player
     //ADD HERE TO ADD MULTIPLE CARDS
     await pb.collection('player_cards').create({
@@ -166,7 +163,6 @@ export const createGame = async ({
     };
 
     const record = await pb.collection("games").create(data);
-    console.log("Game created:", record);
     return record.id; // Assuming the created record has an `id` field
   } catch (err: any) {
     console.error("Failed to create game:", err);
@@ -184,7 +180,6 @@ export const joinGame = async ({ gameId, playerId, score }: JoinGameData) => {
     };
 
     const record = await pb.collection("game_players").create(data);
-    console.log("Player joined game:", record);
     return record.id;
   } catch (err: any) {
     console.error(`Failed to add player ${playerId} to game ${gameId}:`, err);
@@ -201,7 +196,6 @@ export const leaveGame = async (playerId: string) => {
     if (!playerRecord) throw new Error("Player is not in any game.");
 
     await pb.collection("game_players").delete(playerRecord.id);
-    console.log("Player left the game:", playerRecord);
   } catch (err: any) {
     console.error("Failed to leave game:", err);
     throw new Error(err.message || "Failed to leave game");
@@ -235,7 +229,6 @@ export async function deletePlayerCards(gamePlayerId: string) {
     );
     await Promise.all(deletePromises);
 
-    console.log(`Removed ${playerCards.length} cards assigned to the player.`);
   } catch (error) {
     console.error("Error removing player cards:", error);
     throw error;

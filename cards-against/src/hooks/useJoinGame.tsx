@@ -1,12 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { joinGame, drawUniqueCard } from "@/api/api";
 import { JoinGameData } from "@/lib/interface";
-import usePlayerLobbyStore from "@/store/playerLobbyStore";
+
 import { useGameStore } from "@/store/useGameStore";
 
 export function useJoinGame() {
-  const { setPlayerGameId } = usePlayerLobbyStore();
-  const { setPlayerId, setGamePlayerId } = useGameStore(); // ✅ Added setGamePlayerId
+
+  const { setGamePlayerId, setGameId } = useGameStore(); // ✅ Added setGamePlayerId
 
   return useMutation({
     mutationFn: async ({ gameId, playerId, score }: JoinGameData) => {
@@ -15,10 +15,9 @@ export function useJoinGame() {
     },
 
     onSuccess: async (gamePlayerId, { gameId }) => {
-      setPlayerGameId(gameId);
-      setPlayerId(gamePlayerId); // ✅ Store in playerId
+      //setPlayerId(gamePlayerId); // ✅ Store in playerId
       setGamePlayerId(gamePlayerId); // ✅ Store in gamePlayerId
-
+      setGameId(gameId)
       console.log("Player successfully joined the game with ID:", gamePlayerId);
       console.log("setPlayerGameId: ", gameId)
 

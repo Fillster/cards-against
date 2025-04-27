@@ -5,6 +5,8 @@ import { useGameStore } from "@/store/useGameStore";
 import PlayerCard from "./playerCard";
 import { useRealtimeSubmissions } from "@/hooks/useRealtimeSubmissions";
 import { useNextRound } from "@/hooks/useNextRound";
+import { useQueryClient } from "@tanstack/react-query";
+
 interface Submission {
   id: string;
   round_id: string;
@@ -17,13 +19,27 @@ interface Submission {
   };
 }
 
+interface Round {
+  id: string;
+  czar_id: string; // who is the czar for this round
+  black_card_id: string;
+  expand?: {
+    black_card_id?: {
+      text: string;
+    };
+  };
+}
+
 const PlayerSubmissions: React.FC = () => {
+
+
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [currentSubmission, setCurrentSubmission] = useState<Submission | null>(null);
   const { nextRound } = useNextRound();
-  const { playerState, currentRound, isCardCzar } = useGameStore();
+  const { playerState, currentRound, gameId, isCardCzar, currentCardCzarId, addPlayerSubmit, removePlayerSubmit } = useGameStore();
   const currentPlayerId = pb.authStore.model?.id;
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchCurrentSubmissions = async () => {
@@ -38,6 +54,11 @@ const PlayerSubmissions: React.FC = () => {
             expand: item.expand || {},
           }));
           setSubmissions(formatted);
+          
+          formatted.forEach((item) => {
+          addPlayerSubmit(item.game_players_id);
+        });
+
         }
       } catch (error) {
         console.error("Failed to fetch submissions:", error);
@@ -55,6 +76,8 @@ const PlayerSubmissions: React.FC = () => {
         });
   
         setSubmissions((prev) => [...prev, fullSubmission]);
+        addPlayerSubmit(fullSubmission.game_players_id);  // Zustand action
+  
       } catch (err) {
         console.error("Error fetching expanded submission:", err);
       }
@@ -64,10 +87,12 @@ const PlayerSubmissions: React.FC = () => {
       );
     } else if (e.action === "delete") {
       setSubmissions((prev) => prev.filter((sub) => sub.id !== e.record.id));
+      removePlayerSubmit(e.record.game_players_id);  // Zustand action
     }
   
     setCurrentSubmission(e.record);
   }, []);
+  
   
 
   useRealtimeSubmissions<Submission>(handleRealtimeUpdate);
@@ -75,7 +100,6 @@ const PlayerSubmissions: React.FC = () => {
   const getCardText = (submission: Submission) => {
     const isVisibleToPlayer =
       playerState === "viewing_results" ||
-      isCardCzar ||
       submission.game_players_id === currentPlayerId;
 
     return isVisibleToPlayer ? submission.expand?.card_id?.text || "" : "";
@@ -84,7 +108,14 @@ const PlayerSubmissions: React.FC = () => {
  
 const handleCardClick = async (submission: Submission) => {
   if (!isCardCzar) return;
-
+  
+ 
+  /*const round = queryClient.getQueryData<Round>(["currentRound", gameId]);
+  console.log("ROUND GOT: ", round)
+  if (!round) {
+    console.error("No round data available");
+    return;
+  }*/
   setSelectedSubmissionId(submission.id);
   console.log("Card Czar selected submission:", submission);
 
@@ -93,13 +124,13 @@ const handleCardClick = async (submission: Submission) => {
   try {
     const player = await pb.collection("game_players").getOne(playerId);
     await pb.collection("game_players").update(playerId, {
-      points: (player.points || 0) + 100,
+      score: (player.score || 0) + 100,
     });
 
     console.log(`Awarded 100 points to player ${playerId}`);
 
     // 🔥 Start next round after scoring
-    await nextRound(currentRound.game_id, currentRound.czar_id);
+    await nextRound(gameId, currentCardCzarId);
   } catch (err) {
     console.error("Error handling card click:", err);
   }

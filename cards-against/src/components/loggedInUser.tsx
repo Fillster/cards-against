@@ -1,13 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useGameStore } from "@/store/useGameStore";
 
 const LoggedInUser: React.FC = () => {
-  const [playerName, setPlayerName] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Retrieve the player name from localStorage when the component mounts
-    const storedPlayerName = localStorage.getItem("playerName");
-    setPlayerName(storedPlayerName);
-  }, []); // Empty dependency array ensures this runs only once
+  const playerName = useGameStore((state) => state.playerName);
 
   return (
     <div>

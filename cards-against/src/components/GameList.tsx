@@ -1,12 +1,13 @@
 import { Button } from "./ui/button";
 import { useGames } from "@/hooks/useGames";
 import { useJoinGame } from "@/hooks/useJoinGame";
-import usePlayerLobbyStore from "@/store/playerLobbyStore";
+import { useGameStore } from "@/store/useGameStore";
+
 
 const GameList = () => {
   const { data: games, isLoading, error } = useGames();
   const { mutate: joinGame, status } = useJoinGame();
-  const { playerId } = usePlayerLobbyStore();
+  const playerId = useGameStore((state) => state.playerId); 
 
   const isJoining = status === "pending";
 

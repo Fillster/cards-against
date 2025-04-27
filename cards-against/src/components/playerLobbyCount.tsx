@@ -12,7 +12,6 @@ const PlayerLobbyCount: React.FC<PlayerLobbyCountProps> = ({ lobbyId }) => {
 
   useEffect(() => {
     const fetchPlayerCount = async () => {
-      console.log("lobby id: ", lobbyId)
       setLoading(true);
       setError(null);
       try {
@@ -20,7 +19,6 @@ const PlayerLobbyCount: React.FC<PlayerLobbyCountProps> = ({ lobbyId }) => {
         const players = await pb.collection('lobby_players').getFullList({
           filter: `lobby_id="${lobbyId}"`,
         });
-        console.log("players:", players);
         // Set the number of players in the lobby
         setPlayerCount(players.length);
       } catch (err: any) {

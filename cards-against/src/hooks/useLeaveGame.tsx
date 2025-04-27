@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { leaveGame } from "@/api/api";
-import usePlayerLobbyStore from "@/store/playerLobbyStore";
 import { useGameStore } from "@/store/useGameStore";
 import { deletePlayerCards } from "@/api/api";
 
 export function useLeaveGame() {
-  const { setPlayerGameId } = usePlayerLobbyStore();
+
   const { gamePlayerId, setGamePlayerId } = useGameStore();
 
   return useMutation({
@@ -29,7 +28,6 @@ export function useLeaveGame() {
     },
 
     onSuccess: () => {
-      setPlayerGameId(null);
       setGamePlayerId(null);
       console.log("Player successfully left the game and cards were removed.");
     },
